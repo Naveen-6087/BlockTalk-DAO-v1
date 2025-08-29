@@ -45,11 +45,3 @@ npm start  # or: yarn start
 
 Solidity contracts live under `contracts/`. Deployment and helper scripts are in `scripts/`.
 
-## Notes
-
-- This project does not require Moralis. Any prior references have been removed.
-- Chain artifacts used by the UI are under `frontend/src/chain-info`.
-
-## License
-
-MIT
