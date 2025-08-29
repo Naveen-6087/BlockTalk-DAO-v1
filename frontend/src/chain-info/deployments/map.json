@@ -1,0 +1,16 @@
+{
+  "11155111": {
+    "Box": [
+      "0x2a1b9f988ca62c139B6BD1423c668C79A50d5339"
+    ],
+    "GovernanceToken": [
+      "0x65A126BEe044FB436E8096D37389249862f43DCa"
+    ],
+    "MoralisGovernor": [
+      "0xCBFBD535E377ec8D0412B9689c1A30AB245F7B8F"
+    ],
+    "TimeLock": [
+      "0x9F150779Eaa16A7b416e21aeF301AE298a7CAC2c"
+    ]
+  }
+}
