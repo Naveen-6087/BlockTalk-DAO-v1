@@ -140,15 +140,12 @@ const VotingCountdownTimer = ({ proposalId, currentState, onStateChange }) => {
     );
 };
 
-export const VoteProposal = ({ lastId, signer }) => {
-
+export const VoteProposal = ({ lastId, signer, proposal, onUpdate }) => {
     const { getProposalState } = useGetState();
+    const { voteInProposal } = useVoteProposal();
 
     const [proposalState, setProposalState] = useState(null);
     const [blockNumber, setBlockNumber] = useState(null);
-
-    const { voteInProposal } = useVoteProposal();
-
     const [voteReason, setVoteReason] = useState();
     const [isLoading, setIsLoading] = useState(false);
     const [alreadyVoted, setAlreadyVoted] = useState(false);
@@ -162,6 +159,18 @@ export const VoteProposal = ({ lastId, signer }) => {
     const getTheState = async () => {
         const state = await getProposalState(lastId);
         setProposalState(state);
+        
+        // Update the proposal state in localStorage
+        if (proposal && onUpdate) {
+            const proposals = JSON.parse(localStorage.getItem('proposals') || '[]');
+            const proposalIndex = proposals.findIndex(p => p.id === lastId);
+            if (proposalIndex !== -1) {
+                proposals[proposalIndex].state = state;
+                proposals[proposalIndex].lastUpdated = Date.now();
+                localStorage.setItem('proposals', JSON.stringify(proposals));
+                onUpdate();
+            }
+        }
         
         // Get current block number to calculate when voting starts
         if (window.ethereum) {
@@ -223,6 +232,7 @@ export const VoteProposal = ({ lastId, signer }) => {
     }
 
     const shortId = lastId ? lastId.slice(0, 11) + "..." : 0;
+    const shortDescription = proposal?.description ? (proposal.description.length > 50 ? proposal.description.slice(0, 50) + "..." : proposal.description) : "No description";
 
     const handleVote = async (support) => {
         if (!signer || !lastId) return;
@@ -231,7 +241,8 @@ export const VoteProposal = ({ lastId, signer }) => {
         try {
             await voteInProposal(signer, lastId, support, voteReason);
             setAlreadyVoted(true);
-            navigate('/execute');
+            // Don't navigate away, just refresh the proposal state
+            setTimeout(getTheState, 2000);
         } catch (error) {
             console.error('Vote failed:', error);
         } finally {
@@ -244,10 +255,11 @@ export const VoteProposal = ({ lastId, signer }) => {
 
     return (<>
         <div className="rounded-lg border border-white/10 bg-white/5 p-4">
-            <div className="text-xs uppercase tracking-wide text-slate-400">Current/Latest Voting</div>
-            <div className="mt-1 text-xl font-semibold text-white">{shortId}</div>
-            <div className="mt-1 text-sm text-slate-300">Proposal state: <span className={`font-medium ${currentState === 'Active' ? 'text-emerald-400' : currentState === 'Pending' ? 'text-yellow-400' : 'text-slate-400'}`}>{currentState}</span></div>
-            <div className="mt-2 text-xs text-slate-400">{statusMessage}</div>
+            <div className="text-xs uppercase tracking-wide text-slate-400">Proposal {shortId}</div>
+            <div className="mt-1 text-lg font-semibold text-white">{shortDescription}</div>
+            <div className="mt-1 text-sm text-slate-300">Value: <span className="font-medium text-fuchsia-400">{proposal?.value || 'N/A'}</span></div>
+            <div className="mt-1 text-sm text-slate-300">Proposal state: <span className={`font-medium ${currentState === 'Active' ? 'text-emerald-400' : currentState === 'Pending' ? 'text-yellow-400' : currentState === 'Succeeded' ? 'text-green-400' : currentState === 'Defeated' ? 'text-red-400' : 'text-slate-400'}`}>{currentState}</span></div>
+            <div className="mt-1 text-sm text-slate-400">{statusMessage}</div>
             <div className="mt-2">
                 <button 
                     onClick={getTheState}
@@ -257,59 +269,82 @@ export const VoteProposal = ({ lastId, signer }) => {
                 </button>
             </div>
         </div>
-        
-        {/* Voting Countdown Timer */}
+
+        {/* Countdown Timer */}
         <VotingCountdownTimer 
             proposalId={lastId} 
             currentState={proposalState} 
             onStateChange={getTheState}
         />
-        
-        {alreadyVoted && (
-            <div className="mt-4 rounded-md border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-200">
-                You have already voted on this proposal.
-            </div>
-        )}
-        
+
         {currentState === "Active" && !alreadyVoted ? (
-            <div className="mt-4 space-y-3">
-                <input 
-                    placeholder="Reason (optional)" 
-                    className="w-full rounded-md border border-white/10 bg-white/10 px-3 py-2 text-sm text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-fuchsia-500/50" 
-                    name="reason" 
-                    onChange={handleVoteReason} 
-                    defaultValue='' 
-                />
-                <div className="flex items-center justify-between gap-2">
+            <div className="mt-4 space-y-4">
+                <div className="text-center">
+                    <div className="text-lg font-semibold text-emerald-200">Cast Your Vote</div>
+                    <div className="text-sm text-slate-300 mt-1">Choose your preference for this proposal</div>
+                </div>
+                
+                <div className="flex justify-center gap-4">
                     <button 
                         disabled={isLoading} 
-                        className="flex-1 rounded-md border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-sm font-medium text-emerald-200 hover:bg-emerald-500/20 disabled:opacity-50" 
+                        className="inline-flex items-center gap-2 rounded-md bg-emerald-600 px-6 py-3 text-sm font-medium text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50" 
                         onClick={() => handleVote(1)}
                     >
-                        {isLoading && <Spinner size={14} />} In Favor
+                        {isLoading && <Spinner size={16} />} Vote For
                     </button>
+                    
                     <button 
                         disabled={isLoading} 
-                        className="flex-1 rounded-md border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-sm font-medium text-rose-200 hover:bg-rose-500/20 disabled:opacity-50" 
+                        className="inline-flex items-center gap-2 rounded-md bg-red-600 px-6 py-3 text-sm font-medium text-white hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-50" 
                         onClick={() => handleVote(0)}
                     >
-                        {isLoading && <Spinner size={14} />} Against
-                    </button>
-                    <button 
-                        disabled={isLoading} 
-                        className="flex-1 rounded-md border border-slate-400/30 bg-slate-500/10 px-3 py-2 text-sm font-medium text-slate-200 hover:bg-slate-500/20 disabled:opacity-50" 
-                        onClick={() => handleVote(2)}
-                    >
-                        {isLoading && <Spinner size={14} />} Abstain
+                        {isLoading && <Spinner size={16} />} Vote Against
                     </button>
                 </div>
+
+                <div className="text-center">
+                    <textarea 
+                        className="w-full max-w-md rounded-md border border-white/10 bg-white/10 px-3 py-2 text-sm text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-fuchsia-500/50" 
+                        placeholder="Optional: Add a reason for your vote" 
+                        value={voteReason || ''} 
+                        onChange={handleVoteReason}
+                        rows={3}
+                    />
+                </div>
+            </div>
+        ) : currentState === "Active" && alreadyVoted ? (
+            <div className="mt-4 text-center">
+                <div className="text-emerald-300 font-medium">You have already voted on this proposal</div>
+                <div className="text-sm text-slate-400 mt-1">Wait for the voting period to end</div>
+            </div>
+        ) : currentState === "Pending" ? (
+            <div className="mt-4 text-center">
+                <div className="text-yellow-300 font-medium">Voting will start soon</div>
+                <div className="text-sm text-slate-400 mt-1">Proposal is pending confirmation</div>
+            </div>
+        ) : currentState === "Succeeded" ? (
+            <div className="mt-4 text-center">
+                <div className="text-green-300 font-medium">Proposal succeeded!</div>
+                <div className="text-sm text-slate-400 mt-1">Go to Execute page to queue and execute</div>
+            </div>
+        ) : currentState === "Defeated" ? (
+            <div className="mt-4 text-center">
+                <div className="text-red-300 font-medium">Proposal defeated</div>
+                <div className="text-sm text-slate-400 mt-1">This proposal did not receive enough votes</div>
+            </div>
+        ) : currentState === "Queued" ? (
+            <div className="mt-4 text-center">
+                <div className="text-fuchsia-300 font-medium">Proposal is queued</div>
+                <div className="text-sm text-slate-400 mt-1">Go to Execute page to execute it</div>
+            </div>
+        ) : currentState === "Executed" ? (
+            <div className="mt-4 text-center">
+                <div className="text-green-300 font-medium">Proposal executed successfully!</div>
+                <div className="text-sm text-slate-400 mt-1">This proposal has been completed</div>
             </div>
         ) : (
-            <div className="mt-4 p-3 rounded-md border border-slate-400/30 bg-slate-500/10">
-                <p className="text-sm text-slate-400">{statusMessage}</p>
-                {currentState === "Pending" && (
-                    <p className="text-xs text-slate-500 mt-1">Please wait for the voting delay period to end.</p>
-                )}
+            <div className="mt-4 text-center">
+                <div className="text-slate-300">Waiting for proposal...</div>
             </div>
         )}
     </>)

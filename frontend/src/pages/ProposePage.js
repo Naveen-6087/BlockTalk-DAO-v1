@@ -34,6 +34,26 @@ export default function ProposePage({ signer, createProposal, proposal, newValue
             if (newId) {
                 console.log('Proposal created with ID:', newId);
                 setLocalProposalId(newId);
+                
+                // Store proposal in the proposals array instead of overwriting
+                const proposals = JSON.parse(localStorage.getItem('proposals') || '[]');
+                const newProposal = {
+                    id: newId,
+                    description: params.proposalDescription,
+                    value: params.proposalAmount,
+                    state: 'pending',
+                    createdAt: Date.now()
+                };
+                proposals.push(newProposal);
+                localStorage.setItem('proposals', JSON.stringify(proposals));
+                
+                // Dispatch custom event to notify other components
+                const event = new CustomEvent('proposalsUpdated', { 
+                    detail: { proposals, newProposal } 
+                });
+                window.dispatchEvent(event);
+                
+                // Keep the last proposal ID for backward compatibility
                 localStorage.setItem('lastProposalId', newId);
                 localStorage.setItem('proposalDescription', params.proposalDescription);
                 localStorage.setItem('proposalAmount', params.proposalAmount);
@@ -54,9 +74,19 @@ export default function ProposePage({ signer, createProposal, proposal, newValue
 
     return (
         <section className="space-y-6">
-            <h2 className="text-2xl font-semibold">Propose a new Execution</h2>
-            <p className="text-slate-300">DAO members will vote to decide what happens next.</p>
-            <p className="text-xs text-slate-400">Last proposal: {shortId}</p>
+            <div className="flex justify-between items-center">
+                <div>
+                    <h2 className="text-2xl font-semibold">Propose a new Execution</h2>
+                    <p className="text-slate-300">DAO members will vote to decide what happens next.</p>
+                    <p className="text-xs text-slate-400">Last proposal: {shortId}</p>
+                </div>
+                {/* <button 
+                    onClick={() => window.location.href = '/history'}
+                    className="text-sm text-blue-400 hover:text-blue-300 underline"
+                >
+                    View History
+                </button> */}
+            </div>
 
             {error && (
                 <div className="rounded-md border border-red-400/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">

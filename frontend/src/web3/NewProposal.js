@@ -23,7 +23,7 @@ export function useCreateProposal() {
 
     async function createProposal(signer, proposalDescription, value) {
         try {
-            clearLocalStorage()
+            // clearLocalStorage() - REMOVED: This was wiping out all proposals!
             const network = await signer.provider.getNetwork()
             const chainIdKey = String(network.chainId)
             const boxContract = contractAddresses[chainIdKey]["Box"][0];

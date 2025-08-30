@@ -166,7 +166,7 @@ const CountdownTimer = ({ proposalId, currentState, onStateChange }) => {
     return null;
 };
 
-export const ExecuteProposal = ({ lastId, signer, value, description }) => {
+export const ExecuteProposal = ({ lastId, signer, value, description, proposal, onUpdate }) => {
 
     const { getProposalState } = useGetState();
 
@@ -178,6 +178,18 @@ export const ExecuteProposal = ({ lastId, signer, value, description }) => {
     const getTheState = async () => {
         const state = await getProposalState(lastId);
         setProposalState(state);
+        
+        // Update the proposal state in localStorage
+        if (proposal && onUpdate) {
+            const proposals = JSON.parse(localStorage.getItem('proposals') || '[]');
+            const proposalIndex = proposals.findIndex(p => p.id === lastId);
+            if (proposalIndex !== -1) {
+                proposals[proposalIndex].state = state;
+                proposals[proposalIndex].lastUpdated = Date.now();
+                localStorage.setItem('proposals', JSON.stringify(proposals));
+                onUpdate();
+            }
+        }
     }
 
     useEffect(() => {
@@ -204,12 +216,14 @@ export const ExecuteProposal = ({ lastId, signer, value, description }) => {
     }
 
     const shortId = lastId ? lastId.slice(0, 11) + "..." : 0;
+    const shortDescription = description ? (description.length > 50 ? description.slice(0, 50) + "..." : description) : "No description";
 
     return (<>
         <div className="rounded-lg border border-white/10 bg-white/5 p-4">
-            <div className="text-xs uppercase tracking-wide text-slate-400">Current/Latest Proposal</div>
-            <div className="mt-1 text-xl font-semibold text-white">{shortId}</div>
-            <div className="mt-1 text-sm text-slate-300">Proposal state: <span className={`font-medium ${proposalState === '4' ? 'text-emerald-400' : proposalState === '5' ? 'text-fuchsia-400' : proposalState === '1' ? 'text-amber-400' : 'text-slate-400'}`}>{handleVotingState(proposalState)}</span></div>
+            <div className="text-xs uppercase tracking-wide text-slate-400">Proposal {shortId}</div>
+            <div className="mt-1 text-lg font-semibold text-white">{shortDescription}</div>
+            <div className="mt-1 text-sm text-slate-300">Value: <span className="font-medium text-fuchsia-400">{value}</span></div>
+            <div className="mt-1 text-sm text-slate-300">State: <span className={`font-medium ${proposalState === '4' ? 'text-emerald-400' : proposalState === '5' ? 'text-fuchsia-400' : proposalState === '1' ? 'text-amber-400' : proposalState === '7' ? 'text-green-400' : 'text-slate-400'}`}>{handleVotingState(proposalState)}</span></div>
             <div className="mt-2">
                 <button 
                     onClick={getTheState}
@@ -255,6 +269,27 @@ export const ExecuteProposal = ({ lastId, signer, value, description }) => {
                         return;
                     }
                     await queueProposal(signer, value, description);
+                    
+                    // Mark proposal as queued in localStorage
+                    if (proposal && onUpdate) {
+                        const proposals = JSON.parse(localStorage.getItem('proposals') || '[]');
+                        const proposalIndex = proposals.findIndex(p => p.id === lastId);
+                        if (proposalIndex !== -1) {
+                            proposals[proposalIndex].state = '6';
+                            proposals[proposalIndex].status = 'queued';
+                            proposals[proposalIndex].lastUpdated = Date.now();
+                            localStorage.setItem('proposals', JSON.stringify(proposals));
+                            
+                            // Dispatch event to notify other components
+                            const event = new CustomEvent('proposalsUpdated', { 
+                                detail: { proposals, updatedProposal: proposals[proposalIndex] } 
+                            });
+                            window.dispatchEvent(event);
+                            
+                            onUpdate();
+                        }
+                    }
+                    
                     // Refresh state after queuing
                     setTimeout(getTheState, 2000);
                 } catch (e) {
@@ -269,6 +304,28 @@ export const ExecuteProposal = ({ lastId, signer, value, description }) => {
                 setIsLoading(true); 
                 try { 
                     await executeProposal(signer, value, description);
+                    
+                    // Mark proposal as executed in localStorage
+                    if (proposal && onUpdate) {
+                        const proposals = JSON.parse(localStorage.getItem('proposals') || '[]');
+                        const proposalIndex = proposals.findIndex(p => p.id === lastId);
+                        if (proposalIndex !== -1) {
+                            proposals[proposalIndex].state = '7';
+                            proposals[proposalIndex].status = 'executed';
+                            proposals[proposalIndex].executedAt = Date.now();
+                            proposals[proposalIndex].lastUpdated = Date.now();
+                            localStorage.setItem('proposals', JSON.stringify(proposals));
+                            
+                            // Dispatch event to notify other components
+                            const event = new CustomEvent('proposalsUpdated', { 
+                                detail: { proposals, updatedProposal: proposals[proposalIndex] } 
+                            });
+                            window.dispatchEvent(event);
+                            
+                            onUpdate();
+                        }
+                    }
+                    
                     // Refresh state after execution
                     setTimeout(getTheState, 2000);
                 } finally { 
@@ -281,6 +338,9 @@ export const ExecuteProposal = ({ lastId, signer, value, description }) => {
         </div> : handleVotingState(proposalState) === "Defeated" ? <div className="mt-4 text-center">
             <div className="text-red-300 font-medium">Proposal defeated</div>
             <div className="text-sm text-slate-400 mt-1">This proposal did not receive enough votes</div>
+        </div> : handleVotingState(proposalState) === "Executed" ? <div className="mt-4 text-center">
+            <div className="text-green-300 font-medium">Proposal executed successfully!</div>
+            <div className="text-sm text-slate-400 mt-1">This proposal has been completed</div>
         </div> : <div className="mt-4 text-center">
             <div className="text-slate-300">Waiting for proposal...</div>
         </div>
