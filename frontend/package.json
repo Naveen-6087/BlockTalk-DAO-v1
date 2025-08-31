@@ -33,7 +33,7 @@
     "dev:css": "tailwindcss -i ./src/index.css -o ./src/output.css --watch",
     "start": "concurrently \"npm:dev:css\" \"react-scripts start\"",
     "build:css": "tailwindcss -i ./src/index.css -o ./src/output.css",
-    "build": "npm run build:css && react-scripts build",
+    "build": "CI=false npm run build:css && react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },

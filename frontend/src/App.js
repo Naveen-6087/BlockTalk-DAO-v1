@@ -26,10 +26,15 @@ function App() {
 
   // keep balance updated when signer connects
   useEffect(() => {
-    if (signer) {
-      getBalance(signer["_address"]);
+    if (signer && account) {
+        getBalance(signer, account);  // Pass signer and account
     }
-  }, [signer, getBalance]);
+  }, [signer, account, getBalance]);
+  // useEffect(() => {
+  //   if (signer) {
+  //     getBalance(signer["_address"]);
+  //   }
+  // }, [signer, getBalance]);
 
   return (
     <BrowserRouter>
