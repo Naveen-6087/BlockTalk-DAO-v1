@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react';
 import { VoteProposal } from '../components/VoteBox';
-import { useGetProposals } from '../web3/GetProposalCount';
 
 export default function VotePage({ signer }) {
-    const { proposalCount } = useGetProposals();
     const [proposals, setProposals] = useState([]);
 
     useEffect(() => {
@@ -38,16 +36,10 @@ export default function VotePage({ signer }) {
         };
     }, []);
 
+    // Function to refresh proposals from localStorage
     const refreshProposals = () => {
         const storedProposals = JSON.parse(localStorage.getItem('proposals') || '[]');
         setProposals(storedProposals);
-    };
-
-    const debugLocalStorage = () => {
-        const storedProposals = JSON.parse(localStorage.getItem('proposals') || '[]');
-        console.log('=== DEBUG localStorage ===');
-        console.log('proposals array:', storedProposals);
-        console.log('========================');
     };
 
     return (

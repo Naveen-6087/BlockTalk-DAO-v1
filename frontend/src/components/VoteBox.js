@@ -145,12 +145,10 @@ export const VoteProposal = ({ lastId, signer, proposal, onUpdate }) => {
     const { voteInProposal } = useVoteProposal();
 
     const [proposalState, setProposalState] = useState(null);
-    const [blockNumber, setBlockNumber] = useState(null);
-    const [voteReason, setVoteReason] = useState();
+    const [voteReason, setVoteReason] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [alreadyVoted, setAlreadyVoted] = useState(false);
     const { hasVoted } = useHasVoted();
-    const navigate = useNavigate();
 
     const handleVoteReason = (e) => {
         setVoteReason(e.target.value);
@@ -176,7 +174,6 @@ export const VoteProposal = ({ lastId, signer, proposal, onUpdate }) => {
         if (window.ethereum) {
             const provider = new ethers.providers.Web3Provider(window.ethereum);
             const currentBlock = await provider.getBlockNumber();
-            setBlockNumber(currentBlock);
         }
     }
 
@@ -187,7 +184,7 @@ export const VoteProposal = ({ lastId, signer, proposal, onUpdate }) => {
             const interval = setInterval(getTheState, 5000);
             return () => clearInterval(interval);
         }
-    }, [lastId])
+    }, [lastId, getTheState])
 
     useEffect(() => {
         const checkHasVoted = async () => {

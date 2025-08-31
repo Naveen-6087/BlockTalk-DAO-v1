@@ -11,7 +11,6 @@ import FundsPage from './pages/FundsPage';
 import ProposePage from './pages/ProposePage';
 import VotePage from './pages/VotePage';
 import ExecutePage from './pages/ExecutePage';
-import ProposalHistoryPage from './pages/ProposalHistoryPage';
 import "./App.css"
 
 

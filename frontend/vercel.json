@@ -4,7 +4,10 @@
     {
       "src": "package.json",
       "use": "@vercel/static-build",
-      "config": { "distDir": "build" }
+      "config": { 
+        "distDir": "build",
+        "includeFiles": ["build/**", "public/**"]
+      }
     }
   ],
   "routes": [
@@ -12,9 +15,15 @@
       "src": "/static/(.*)",
       "dest": "/static/$1"
     },
-{
+    {
+      "src": "/favicon.ico",
+      "status": 404
+    },
+    {
       "src": "/(.*)",
       "dest": "/index.html"
     }
-  ]
+  ],
+  "cleanUrls": true,
+  "trailingSlash": false
 }
