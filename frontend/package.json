@@ -31,7 +31,7 @@
     "dev:css": "tailwindcss -i ./src/index.css -o ./src/output.css --watch",
     "start": "set BROWSER=none && set PUBLIC_URL=./ && concurrently \"npm:dev:css\" \"react-scripts start\"",
     "build:css": "tailwindcss -i ./src/index.css -o ./src/output.css",
-    "build": "npm run build:css && set \"CI=\" && set \"DISABLE_ESLINT_PLUGIN=true\" && react-scripts build",
+    "build": "npm run build:css && set \"CI=false\" && set \"DISABLE_ESLINT_PLUGIN=true\" && react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
