@@ -46,16 +46,14 @@ function App() {
           <Link className="rounded-md px-3 py-2 text-sm font-medium text-white/80 hover:text-white hover:bg-white/10" to="/propose">Propose</Link>
           <Link className="rounded-md px-3 py-2 text-sm font-medium text-white/80 hover:text-white hover:bg-white/10" to="/vote">Vote</Link>
           <Link className="rounded-md px-3 py-2 text-sm font-medium text-white/80 hover:text-white hover:bg-white/10" to="/execute">Execute</Link>
-                      {/* <Link className="rounded-md px-3 py-3 text-sm font-medium text-white/80 hover:text-white hover:bg-white/10" to="/history">History</Link> */}
         </nav>
-        <main className="mx-auto max-w-6xl px-4 pb-16">
+        <main className="mx-auto max-w-6xl px-4 py-4">
           <Routes>
             <Route path="/" element={<HomePage boxValue={boxValue} getValue={getValue} userBalance={userBalance} />} />
             <Route path="/funds" element={<FundsPage signer={signer} getBalance={getBalance} requestFunds={requestFunds} />} />
             <Route path="/propose" element={<ProposePage signer={signer} createProposal={createProposal} proposal={proposal} newValue={newValue} proposalDescription={proposalDescription} />} />
             <Route path="/vote" element={<VotePage signer={signer} />} />
             <Route path="/execute" element={<ExecutePage signer={signer} />} />
-            {/* <Route path="/history" element={<ProposalHistoryPage />} /> */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
